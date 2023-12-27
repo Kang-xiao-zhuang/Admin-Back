@@ -38,6 +38,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
 import java.io.File;
@@ -125,11 +126,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             redisUtils.del(CacheKey.ROLE_AUTH + resources.getId());
         }
         // 修改部门会影响 数据权限
-        if (!Objects.equals(resources.getDept(),user.getDept())) {
+        if (!Objects.equals(resources.getDept(), user.getDept())) {
             redisUtils.del(CacheKey.DATA_USER + resources.getId());
         }
         // 如果用户被禁用，则清除用户登录信息
-        if(!resources.getEnabled()){
+        if (!resources.getEnabled()) {
             onlineUserService.kickOutForUsername(resources.getUsername());
         }
         user.setDeptId(resources.getDept().getId());
@@ -156,7 +157,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateCenter(User resources) {
+        // 更新用户
         User user = getById(resources.getId());
+        // 数据库数据
         User user1 = userMapper.findByPhone(resources.getPhone());
         if (user1 != null && !user.getId().equals(user1.getId())) {
             throw new EntityExistException(User.class, "phone", resources.getPhone());
@@ -220,8 +223,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 验证文件上传的格式
         String image = "gif jpg png jpeg";
         String fileType = FileUtil.getExtensionName(multipartFile.getOriginalFilename());
-        if(fileType != null && !image.contains(fileType)){
-            throw new BadRequestException("文件格式错误！, 仅支持 " + image +" 格式");
+        if (fileType != null && !image.contains(fileType)) {
+            throw new BadRequestException("文件格式错误！, 仅支持 " + image + " 格式");
         }
         User user = userMapper.findByUsername(SecurityUtils.getCurrentUsername());
         String oldPath = user.getAvatarPath();
