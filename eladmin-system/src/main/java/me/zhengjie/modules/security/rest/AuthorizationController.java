@@ -1,18 +1,3 @@
-/*
- *  Copyright 2019-2020 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package me.zhengjie.modules.security.rest;
 
 import cn.hutool.core.util.IdUtil;
@@ -47,6 +32,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
@@ -54,9 +40,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author Zheng Jie
- * @date 2018-11-23
- * 授权、根据token获取用户详细信息
+ * 授权、根据token获取用户详细信息 登录的入口
  */
 @Slf4j
 @RestController
@@ -64,11 +48,15 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Api(tags = "系统：系统授权接口")
 public class AuthorizationController {
+
     private final SecurityProperties properties;
     private final RedisUtils redisUtils;
     private final OnlineUserService onlineUserService;
     private final TokenProvider tokenProvider;
+
+    // 用于配置和构建身份验证管理器，该管理器负责处理身份验证请求
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
+
     @Resource
     private LoginProperties loginProperties;
 
@@ -82,14 +70,17 @@ public class AuthorizationController {
         String code = (String) redisUtils.get(authUser.getUuid());
         // 清除验证码
         redisUtils.del(authUser.getUuid());
+        // 校验
         if (StringUtils.isBlank(code)) {
             throw new BadRequestException("验证码不存在或已过期");
         }
         if (StringUtils.isBlank(authUser.getCode()) || !authUser.getCode().equalsIgnoreCase(code)) {
             throw new BadRequestException("验证码错误");
         }
+        // 获取授权Token
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(authUser.getUsername(), password);
+        //
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         // 生成令牌与第三方系统获取令牌方式
@@ -101,8 +92,10 @@ public class AuthorizationController {
         // 返回 token 与 用户信息
         Map<String, Object> authInfo = new HashMap<String, Object>(2) {{
             put("token", properties.getTokenStartWith() + token);
+            // jwt用户的信息
             put("user", jwtUserDto);
         }};
+        // 判断是否单次登录
         if (loginProperties.isSingleLogin()) {
             // 踢掉之前已经登录的token
             onlineUserService.kickOutForUsername(authUser.getUsername());

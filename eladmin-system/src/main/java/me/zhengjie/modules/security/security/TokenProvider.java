@@ -1,18 +1,3 @@
-/*
- *  Copyright 2019-2020 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package me.zhengjie.modules.security.security;
 
 import cn.hutool.core.date.DateField;
@@ -30,14 +15,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
+
 import javax.servlet.http.HttpServletRequest;
 import java.security.Key;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author /
- */
 @Slf4j
 @Component
 public class TokenProvider implements InitializingBean {
@@ -56,6 +39,7 @@ public class TokenProvider implements InitializingBean {
     @Override
     public void afterPropertiesSet() {
         byte[] keyBytes = Decoders.BASE64.decode(properties.getBase64Secret());
+        // 处理JSON Web Tokens（JWT）时使用HMAC-SHA密钥进行加密和解密
         Key key = Keys.hmacShaKeyFor(keyBytes);
         jwtParser = Jwts.parserBuilder()
                 .setSigningKey(key)
@@ -87,12 +71,14 @@ public class TokenProvider implements InitializingBean {
      * @return /
      */
     Authentication getAuthentication(String token) {
+        // security自带的鉴权机制
         Claims claims = getClaims(token);
         User principal = new User(claims.getSubject(), "******", new ArrayList<>());
         return new UsernamePasswordAuthenticationToken(principal, token, new ArrayList<>());
     }
 
     public Claims getClaims(String token) {
+        // 获取鉴权信息 jwt解析器
         return jwtParser
                 .parseClaimsJws(token)
                 .getBody();
@@ -124,6 +110,7 @@ public class TokenProvider implements InitializingBean {
 
     /**
      * 获取登录用户RedisKey
+     *
      * @param token /
      * @return key
      */
