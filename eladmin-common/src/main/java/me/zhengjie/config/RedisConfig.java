@@ -1,18 +1,3 @@
-/*
- *  Copyright 2019-2020 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package me.zhengjie.config;
 
 import cn.hutool.core.lang.Assert;
@@ -39,17 +24,13 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import reactor.util.annotation.Nullable;
+
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
-
-/**
- * @author Zheng Jie
- * @date 2018-11-24
- */
 @Slf4j
 @Configuration
 @EnableCaching
@@ -58,11 +39,11 @@ import java.util.Map;
 public class RedisConfig extends CachingConfigurerSupport {
 
     /**
-     *  设置 redis 数据默认过期时间，默认2小时
-     *  设置@cacheable 序列化方式
+     * 设置 redis 数据默认过期时间，默认2小时
+     * 设置@cacheable 序列化方式
      */
     @Bean
-    public RedisCacheConfiguration redisCacheConfiguration(){
+    public RedisCacheConfiguration redisCacheConfiguration() {
         FastJsonRedisSerializer<Object> fastJsonRedisSerializer = new FastJsonRedisSerializer<>(Object.class);
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig();
         configuration = configuration.serializeValuesWith(RedisSerializationContext.
@@ -102,17 +83,17 @@ public class RedisConfig extends CachingConfigurerSupport {
     @Override
     public KeyGenerator keyGenerator() {
         return (target, method, params) -> {
-            Map<String,Object> container = new HashMap<>(8);
+            Map<String, Object> container = new HashMap<>(8);
             Class<?> targetClassClass = target.getClass();
             // 类地址
-            container.put("class",targetClassClass.toGenericString());
+            container.put("class", targetClassClass.toGenericString());
             // 方法名称
-            container.put("methodName",method.getName());
+            container.put("methodName", method.getName());
             // 包名称
-            container.put("package",targetClassClass.getPackage());
+            container.put("package", targetClassClass.getPackage());
             // 参数列表
             for (int i = 0; i < params.length; i++) {
-                container.put(String.valueOf(i),params[i]);
+                container.put(String.valueOf(i), params[i]);
             }
             // 转为JSON字符串
             String jsonString = JSON.toJSONString(container);
@@ -155,10 +136,10 @@ public class RedisConfig extends CachingConfigurerSupport {
 /**
  * Value 序列化
  *
- * @author /
  * @param <T>
+ * @author /
  */
- class FastJsonRedisSerializer<T> implements RedisSerializer<T> {
+class FastJsonRedisSerializer<T> implements RedisSerializer<T> {
 
     private final Class<T> clazz;
 
@@ -209,14 +190,15 @@ class StringRedisSerializer implements RedisSerializer<Object> {
         return (bytes == null ? null : new String(bytes, charset));
     }
 
-	@Override
-	public @Nullable byte[] serialize(Object object) {
-		String string = JSON.toJSONString(object);
+    @Override
+    public @Nullable
+    byte[] serialize(Object object) {
+        String string = JSON.toJSONString(object);
 
-		if (org.apache.commons.lang3.StringUtils.isBlank(string)) {
-			return null;
-		}
-		string = string.replace("\"", "");
-		return string.getBytes(charset);
-	}
+        if (org.apache.commons.lang3.StringUtils.isBlank(string)) {
+            return null;
+        }
+        string = string.replace("\"", "");
+        return string.getBytes(charset);
+    }
 }
